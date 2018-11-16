@@ -33,6 +33,7 @@ namespace Mongo.Migration.Demo
             var bsonCollection =
                 client.GetDatabase("TestCars").GetCollection<BsonDocument>("Car");
 
+
            bsonCollection.InsertManyAsync(cars).Wait();
 
             Console.WriteLine("Migrate from:");
