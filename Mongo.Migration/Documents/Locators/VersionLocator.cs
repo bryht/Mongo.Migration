@@ -1,36 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Mongo.Migration.Documents.Attributes;
 
 namespace Mongo.Migration.Documents.Locators
 {
-    internal class VersionLocator : IVersionLocator
+    internal class VersionLocator : AbstractLocator<DocumentVersion, Type>, IVersionLocator
     {
-        private IDictionary<Type, DocumentVersion> _versions;
-
-        private IDictionary<Type, DocumentVersion> Versions
+        public override DocumentVersion? GetLocateOrNull(Type type)
         {
-            get
-            {
-                if (_versions == null)
-                    LoadVersions();
-                return _versions;
-            }
-        }
-
-        public DocumentVersion? GetCurrentVersion(Type type)
-        {
-            if (!Versions.ContainsKey(type))
+            if (!LocatesDictionary.ContainsKey(type))
                 return null;
 
             DocumentVersion value;
-            Versions.TryGetValue(type, out value);
+            LocatesDictionary.TryGetValue(type, out value);
             return value;
         }
 
-        public void LoadVersions()
+        public override void Locate()
         {
             var types =
                 from a in AppDomain.CurrentDomain.GetAssemblies()
@@ -47,7 +34,7 @@ namespace Mongo.Migration.Documents.Locators
                 versions.Add(type.Type, version);
             }
 
-            _versions = versions;
+            LocatesDictionary = versions;
         }
     }
 }

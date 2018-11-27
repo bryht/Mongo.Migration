@@ -21,7 +21,7 @@ namespace Mongo.Migration
         {
             _mongoRegistrator.Register();
             _migrationLocator.LoadMigrations();
-            _versionLocator.LoadVersions();
+            _versionLocator.Locate();
         }
     }
 }
