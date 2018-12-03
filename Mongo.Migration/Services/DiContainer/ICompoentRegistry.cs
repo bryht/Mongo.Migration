@@ -5,5 +5,8 @@ namespace Mongo.Migration.Services.DiContainer
         void RegisterComponents();
 
         TComponent Get<TComponent>() where TComponent : class;
+
+        void SetInstance<TInterface, TInstance>(TInstance implementation)
+            where TInterface : class where TInstance : class;
     }
 }

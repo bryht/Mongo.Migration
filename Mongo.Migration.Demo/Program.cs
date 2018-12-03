@@ -17,7 +17,7 @@ namespace Mongo.Migration.Demo
             var client = new MongoClient(runner.ConnectionString);
 
             // Init MongoMigration
-            MongoMigration.Initialize();
+            MongoMigration.Initialize(client);
 
             client.GetDatabase("TestCars").DropCollection("Car");
 
@@ -48,25 +48,29 @@ namespace Mongo.Migration.Demo
 
             // Create new car and add it with current version number into MongoDB
             var id = ObjectId.GenerateNewId();
-            var type = "Test" + id;
+            var type = "NewTestCar";
             var car = new Car {Doors = 2, Type = type};
 
             typedCollection.InsertOne(car);
             var test = typedCollection.FindAsync(Builders<Car>.Filter.Eq(c => c.Type, type)).Result.Single();
 
-
-
             var aggregate = typedCollection.Aggregate()
                 .Match(new BsonDocument {{"Dors", 3}});
             var results = aggregate.ToListAsync().Result;
 
+            Console.WriteLine("\n");
             Console.WriteLine("New Car was created with version: " + test.Version);
             Console.WriteLine("\n");
+            
+            var automatedResult = typedCollection.FindAsync(_ => true).Result.ToListAsync().Result;
+
+            Console.WriteLine("Replaced automated:");
+            automatedResult.ForEach(r => Console.WriteLine(r.ToBsonDocument() + "\n"));
 
             Console.WriteLine("\n");
             Console.WriteLine("Press any Key to exit...");
             Console.Read();
-
+            
             client.GetDatabase("TestCars").DropCollection("Car");
         }
     }

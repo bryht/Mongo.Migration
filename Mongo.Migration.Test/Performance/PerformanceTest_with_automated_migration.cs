@@ -12,7 +12,7 @@ using NUnit.Framework;
 namespace Mongo.Migration.Test.Performance
 {
     [TestFixture]
-    public class PerformanceTest
+    public class PerformanceTest_with_automated_migration
     {
         [TearDown]
         public void TearDown()
@@ -27,18 +27,17 @@ namespace Mongo.Migration.Test.Performance
         {
             _runner = MongoDbRunner.Start();
             _client = new MongoClient(_runner.ConnectionString);
-            
         }
 
         #region PRIVATE
 
-        private const int DOCUMENT_COUNT = 5000;
+        private const int DOCUMENT_COUNT = 2500;
 
         private const string DATABASE_NAME = "PerformanceTest";
 
         private const string COLLECTION_NAME = "Test";
 
-        private const int TOLERANCE_MS = 250;
+        private const int TOLERANCE_MS = 950;
 
         private MongoClient _client;
         private MongoDbRunner _runner;
@@ -66,7 +65,7 @@ namespace Mongo.Migration.Test.Performance
             if (withVersion)
             {
                 var versionedCollectin = _client.GetDatabase(DATABASE_NAME)
-                    .GetCollection<TestDocumentWithTwoMigrationHighestVersion>(COLLECTION_NAME);
+                    .GetCollection<TestDocumentWithAutoMigrate>(COLLECTION_NAME);
                 var versionedResult = versionedCollectin.FindAsync(_ => true).Result.ToListAsync().Result;
                 return;
             }
@@ -90,7 +89,7 @@ namespace Mongo.Migration.Test.Performance
         #endregion
 
         [Test]
-        public void When_migrating_number_of_documents()
+        public void When_migrating_number_of_documents_with_automated_save()
         {
             // Arrange
             // Worm up MongoCache
@@ -109,7 +108,7 @@ namespace Mongo.Migration.Test.Performance
             ClearCollection();
 
             // Measure time of MongoDb processing without Mongo.Migration
-            MongoMigration.Initialize();
+            MongoMigration.Initialize(_client);
 
             var swWithMigration = new Stopwatch();
             swWithMigration.Start();
@@ -117,12 +116,22 @@ namespace Mongo.Migration.Test.Performance
             MigrateAll(true);
             swWithMigration.Stop();
 
-            ClearCollection();
-
             var result = swWithMigration.ElapsedMilliseconds - sw.ElapsedMilliseconds;
 
             Console.WriteLine(
-              $"MongoDB: {sw.ElapsedMilliseconds}ms, Mongo.Migration: {swWithMigration.ElapsedMilliseconds}ms, Diff: {result}ms (Tolerance: {TOLERANCE_MS}ms), Documents: {DOCUMENT_COUNT}, Migrations per Document: 2");
+              $"First run with automation: MongoDB: {sw.ElapsedMilliseconds}ms, Mongo.Migration: {swWithMigration.ElapsedMilliseconds}ms, Diff: {result}ms (Tolerance: {TOLERANCE_MS}ms), Documents: {DOCUMENT_COUNT}, Migrations per Document: 2");
+            
+            var swSecondWithMigration = new Stopwatch();
+            swSecondWithMigration.Start();
+            MigrateAll(true);
+            swSecondWithMigration.Stop();
+            
+            result = swSecondWithMigration.ElapsedMilliseconds - sw.ElapsedMilliseconds;
+            
+            Console.WriteLine(
+                $"Second run with automation: Mongo.Migration: {swSecondWithMigration.ElapsedMilliseconds}ms, Documents: {DOCUMENT_COUNT}, Migrations per Document: 2"); 
+            
+            ClearCollection();
 
             // Assert
             result.Should().BeLessThan(TOLERANCE_MS);

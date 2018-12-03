@@ -23,11 +23,18 @@ namespace Mongo.Migration.Services.DiContainer
             _container.Register<MigrationInterceptorProvider, MigrationInterceptorProvider>();
             _container.Register<IMigrationLocator, TypeMigrationLocator>(new PerContainerLifetime());
             _container.Register<IVersionLocator, VersionLocator>(new PerContainerLifetime());
+            _container.Register<IAutomateLocator, AutomateLocator>(new PerContainerLifetime());
 
             _container.Register<IMigrationRunner, MigrationRunner>();
             _container.Register<IMigrationInterceptorFactory, MigrationInterceptorFactory>();
             _container.Register<IMongoRegistrator, MongoRegistrator>();
             _container.Register<IApplication, Application>();
+        }
+
+        public void SetInstance<TInterface, TInstance>(TInstance implementation)
+            where TInterface : class where TInstance : class
+        {
+            _container.RegisterInstance(typeof(TInterface), implementation);
         }
 
         public TComponent Get<TComponent>() where TComponent : class

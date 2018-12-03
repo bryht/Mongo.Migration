@@ -1,6 +1,6 @@
 namespace Mongo.Migration.Documents.Attributes
 {
-    public class AutomateInformation
+    public struct AutomateInformation
     {
         public AutomateInformation(string databaseName, string collectionName)
         {

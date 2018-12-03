@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using Mongo.Migration.Documents;
+using Mongo.Migration.Documents.Attributes;
 using Mongo.Migration.Documents.Locators;
 using Mongo.Migration.Exceptions;
 using Mongo.Migration.Migrations.Locators;
 using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace Mongo.Migration.Migrations
 {
@@ -13,14 +16,26 @@ namespace Mongo.Migration.Migrations
     {
         private const string VERSION_FIELD = "Version";
 
+        private readonly IAutomateLocator _automateLocator;
+        private readonly IMongoClient _client;
+
         private readonly IMigrationLocator _migrationLocator;
 
         private readonly IVersionLocator _versionLocator;
 
-        public MigrationRunner(IMigrationLocator migrationLocator, IVersionLocator versionLocator)
+        public MigrationRunner(IMigrationLocator migrationLocator, IVersionLocator versionLocator,
+            IAutomateLocator automateLocator, IMongoClient client)
+        : this(migrationLocator, versionLocator, automateLocator)
+        {
+            _client = client;
+        }
+        
+        public MigrationRunner(IMigrationLocator migrationLocator, IVersionLocator versionLocator,
+            IAutomateLocator automateLocator)
         {
             _migrationLocator = migrationLocator;
             _versionLocator = versionLocator;
+            _automateLocator = automateLocator;
         }
 
         public void CheckVersion<TClass>(TClass instance) where TClass : class, IDocument
@@ -51,6 +66,7 @@ namespace Mongo.Migration.Migrations
             // Zeitkritisch
             var latestVersion = _migrationLocator.GetLatestVersion(type);
             var currentVersion = _versionLocator.GetLocateOrNull(type) ?? latestVersion;
+            var automateInformation = _automateLocator.GetLocateOrNull(type);
 
             if (documentVersion == currentVersion)
                 return;
@@ -62,7 +78,24 @@ namespace Mongo.Migration.Migrations
             }
 
             MigrateUp(type, documentVersion, document);
+
+            if (automateInformation != null)
+            {
+                UpdateMigrationOnDatabase((AutomateInformation) automateInformation, document);
+            }
         }
+        
+        private void UpdateMigrationOnDatabase(AutomateInformation information, BsonDocument document)
+        {
+            if (_client == null)
+            {
+                throw new NoMongoClientRegisteredException();
+            }
+            
+            var collection = _client.GetDatabase(information.DatabaseName).GetCollection<BsonDocument>(information.CollectionName);
+            var filter = new BsonDocument(){{"_id", document["_id"]}};
+            collection.ReplaceOne(filter, document);
+        } 
 
         private static void DetermineCurrentVersion<TClass>(
             TClass instance,
@@ -74,6 +107,7 @@ namespace Mongo.Migration.Migrations
                 instance.Version = currentVersion.ToString();
                 return;
             }
+
             instance.Version = latestVersion;
         }
 

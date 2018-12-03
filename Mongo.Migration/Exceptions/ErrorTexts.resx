@@ -120,6 +120,9 @@
   <data name="AlreadyInitialized" xml:space="preserve">
     <value>MongoMigration was already initialized</value>
   </data>
+  <data name="NoMongoClientRegistered" xml:space="preserve">
+    <value>AutomatedMigration active but no MongoClient registered. Please add client to MongoMirgation.Initialize(client)</value>
+  </data>
   <data name="DuplicateVersion" xml:space="preserve">
     <value>Migration '{0}' contains duplicate version: {1}</value>
   </data>

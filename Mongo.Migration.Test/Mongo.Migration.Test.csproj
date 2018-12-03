@@ -80,12 +80,16 @@
     <Compile Include="Migrations\MigrationRunner_when_migrating_up.cs" />
     <Compile Include="MongoDB\MongoRegistrater_when_registrating.cs" />
     <Compile Include="Performance\PerformanceTest.cs" />
+    <Compile Include="Performance\PerformanceTest_with_automated_migration.cs" />
     <Compile Include="Services\Initializers\MongoMigration_when_initialize.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\Interceptors\MigrationInterceptorFactory_when_creating.cs" />
     <Compile Include="Services\Interceptors\MigrationInterceptorProvider_when_get_serializer.cs" />
     <Compile Include="TestDoubles\TestClass.cs" />
+    <Compile Include="TestDoubles\TestDocumentWithAutoMigrate.cs" />
+    <Compile Include="TestDoubles\TestDocumentWithAutoMigrate_0_0_1.cs" />
     <Compile Include="TestDoubles\TestDocumentWithOneMigration.cs" />
+    <Compile Include="TestDoubles\TestDocumentWithAutoMigrate_0_0_2.cs" />
     <Compile Include="TestDoubles\TestDocumentWithTwoMigrationMiddleVersion_0_0_1.cs" />
     <Compile Include="TestDoubles\TestDocumentWithTwoMigrationMiddleVersion_0_0_2.cs" />
     <Compile Include="TestDoubles\TestDocumentWithTwoMigrationMiddleVersion.cs" />
