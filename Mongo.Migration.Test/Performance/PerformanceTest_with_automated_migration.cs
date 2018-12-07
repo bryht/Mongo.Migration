@@ -18,12 +18,17 @@ namespace Mongo.Migration.Test.Performance
         public void TearDown()
         {
             MongoMigration.Reset();
+        }
+        
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
             _client = null;
             _runner.Dispose();
         }
 
-        [SetUp]
-        public void SetUp()
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
         {
             _runner = MongoDbRunner.Start();
             _client = new MongoClient(_runner.ConnectionString);
@@ -31,13 +36,9 @@ namespace Mongo.Migration.Test.Performance
 
         #region PRIVATE
 
-        private const int DOCUMENT_COUNT = 2500;
-
         private const string DATABASE_NAME = "PerformanceTest";
 
         private const string COLLECTION_NAME = "Test";
-
-        private const int TOLERANCE_MS = 950;
 
         private MongoClient _client;
         private MongoDbRunner _runner;
@@ -75,9 +76,9 @@ namespace Mongo.Migration.Test.Performance
             var result = collection.FindAsync(_ => true).Result.ToListAsync().Result;
         }
 
-        private void AddDocumentsToCache()
+        private void AddDocumentsToCache(int documentCount)
         {
-            InsertMany(DOCUMENT_COUNT, false);
+            InsertMany(documentCount, false);
             MigrateAll(false);
         }
 
@@ -87,21 +88,24 @@ namespace Mongo.Migration.Test.Performance
         }
 
         #endregion
-
-        [Test]
-        public void When_migrating_number_of_documents_with_automated_save()
+        [TestCase(50000, 16500)] 
+        [TestCase(10000, 3500)]
+        [TestCase(1000, 500)]
+        [TestCase(100, 250)]
+        [TestCase(10, 150)] 
+        public void When_migrating_number_of_documents_with_automated_save(int documentCount, int toleranceMs)
         {
             // Arrange
             // Worm up MongoCache
             ClearCollection();
-            AddDocumentsToCache();
+            AddDocumentsToCache(documentCount);
             ClearCollection();
 
             // Act
             // Measure time of MongoDb processing without Mongo.Migration
+            InsertMany(documentCount, false);
             var sw = new Stopwatch();
             sw.Start();
-            InsertMany(DOCUMENT_COUNT, false);
             MigrateAll(false);
             sw.Stop();
 
@@ -110,31 +114,29 @@ namespace Mongo.Migration.Test.Performance
             // Measure time of MongoDb processing without Mongo.Migration
             MongoMigration.Initialize(_client);
 
+            InsertMany(documentCount, true);
             var swWithMigration = new Stopwatch();
             swWithMigration.Start();
-            InsertMany(DOCUMENT_COUNT, true);
             MigrateAll(true);
             swWithMigration.Stop();
 
-            var result = swWithMigration.ElapsedMilliseconds - sw.ElapsedMilliseconds;
+            var firstResult = swWithMigration.ElapsedMilliseconds - sw.ElapsedMilliseconds;
 
             Console.WriteLine(
-              $"First run with automation: MongoDB: {sw.ElapsedMilliseconds}ms, Mongo.Migration: {swWithMigration.ElapsedMilliseconds}ms, Diff: {result}ms (Tolerance: {TOLERANCE_MS}ms), Documents: {DOCUMENT_COUNT}, Migrations per Document: 2");
+              $"First run with automation: MongoDB: {sw.ElapsedMilliseconds}ms, Mongo.Migration: {swWithMigration.ElapsedMilliseconds}ms, Diff: {firstResult}ms (Tolerance: {toleranceMs}ms), Documents: {documentCount}, Migrations per Document: 2");
             
             var swSecondWithMigration = new Stopwatch();
             swSecondWithMigration.Start();
             MigrateAll(true);
             swSecondWithMigration.Stop();
             
-            result = swSecondWithMigration.ElapsedMilliseconds - sw.ElapsedMilliseconds;
-            
             Console.WriteLine(
-                $"Second run with automation: Mongo.Migration: {swSecondWithMigration.ElapsedMilliseconds}ms, Documents: {DOCUMENT_COUNT}, Migrations per Document: 2"); 
+                $"Second run with automation: Mongo.Migration: {swSecondWithMigration.ElapsedMilliseconds}ms, Documents: {documentCount}, Migrations per Document: 2");
             
             ClearCollection();
 
             // Assert
-            result.Should().BeLessThan(TOLERANCE_MS);
+            firstResult.Should().BeLessThan(toleranceMs);
         }
     }
 }
