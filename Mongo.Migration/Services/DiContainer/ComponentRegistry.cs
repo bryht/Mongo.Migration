@@ -36,7 +36,8 @@ namespace Mongo.Migration.Services.DiContainer
         public void SetMongoClient(MongoClient implementation)
         {
             _container.RegisterInstance(typeof(IMongoClient), implementation);
-            _container.Register<IAutomateMigration, AutomateMigration>(new PerContainerLifetime());    
+            _container.Register<IAutomateMigration, AutomateMigration>(new PerContainerLifetime());
+            _container.Register<IMigrationQueue, MigrationQueue>(new PerContainerLifetime());
         }
 
         public TComponent Get<TComponent>() where TComponent : class

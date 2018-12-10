@@ -6,8 +6,6 @@ namespace Mongo.Migration.Services.Automate
 {
     interface IAutomateMigration
     {
-        void Add(AutomateInformation information, BsonDocument document);
-
-        Task Flush();
+        void UpdateOrQueue(AutomateInformation information, BsonDocument document);
     }
 }

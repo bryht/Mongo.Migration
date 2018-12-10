@@ -83,7 +83,7 @@ namespace Mongo.Migration.Migrations
 
             if (automateInformation != null)
             {
-                _automateMigration.Add((AutomateInformation) automateInformation, document);
+                _automateMigration.UpdateOrQueue((AutomateInformation) automateInformation, document);
             }
         }
         
