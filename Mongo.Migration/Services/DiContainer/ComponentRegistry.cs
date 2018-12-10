@@ -3,8 +3,10 @@ using Mongo.Migration.Documents.Locators;
 using Mongo.Migration.Documents.Serializers;
 using Mongo.Migration.Migrations;
 using Mongo.Migration.Migrations.Locators;
+using Mongo.Migration.Services.Automate;
 using Mongo.Migration.Services.Interceptors;
 using Mongo.Migration.Services.MongoDB;
+using MongoDB.Driver;
 
 namespace Mongo.Migration.Services.DiContainer
 {
@@ -31,10 +33,10 @@ namespace Mongo.Migration.Services.DiContainer
             _container.Register<IApplication, Application>();
         }
 
-        public void SetInstance<TInterface, TInstance>(TInstance implementation)
-            where TInterface : class where TInstance : class
+        public void SetMongoClient(MongoClient implementation)
         {
-            _container.RegisterInstance(typeof(TInterface), implementation);
+            _container.RegisterInstance(typeof(IMongoClient), implementation);
+            _container.Register<IAutomateMigration, AutomateMigration>(new PerContainerLifetime());    
         }
 
         public TComponent Get<TComponent>() where TComponent : class

@@ -7,6 +7,7 @@ using Mongo.Migration.Documents.Attributes;
 using Mongo.Migration.Documents.Locators;
 using Mongo.Migration.Exceptions;
 using Mongo.Migration.Migrations.Locators;
+using Mongo.Migration.Services.Automate;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -15,19 +16,20 @@ namespace Mongo.Migration.Migrations
     internal class MigrationRunner : IMigrationRunner
     {
         private const string VERSION_FIELD = "Version";
+        
+        private readonly IAutomateMigration _automateMigration;
 
         private readonly IAutomateLocator _automateLocator;
-        private readonly IMongoClient _client;
 
         private readonly IMigrationLocator _migrationLocator;
 
         private readonly IVersionLocator _versionLocator;
 
         public MigrationRunner(IMigrationLocator migrationLocator, IVersionLocator versionLocator,
-            IAutomateLocator automateLocator, IMongoClient client)
+            IAutomateLocator automateLocator, IAutomateMigration automateMigration)
         : this(migrationLocator, versionLocator, automateLocator)
         {
-            _client = client;
+            _automateMigration = automateMigration;
         }
         
         public MigrationRunner(IMigrationLocator migrationLocator, IVersionLocator versionLocator,
@@ -81,22 +83,10 @@ namespace Mongo.Migration.Migrations
 
             if (automateInformation != null)
             {
-                UpdateMigrationOnDatabase((AutomateInformation) automateInformation, document);
+                _automateMigration.Add((AutomateInformation) automateInformation, document);
             }
         }
         
-        private void UpdateMigrationOnDatabase(AutomateInformation information, BsonDocument document)
-        {
-            if (_client == null)
-            {
-                throw new NoMongoClientRegisteredException();
-            }
-            
-            var collection = _client.GetDatabase(information.DatabaseName).GetCollection<BsonDocument>(information.CollectionName);
-            var filter = new BsonDocument(){{"_id", document["_id"]}};
-            collection.ReplaceOne(filter, document);
-        } 
-
         private static void DetermineCurrentVersion<TClass>(
             TClass instance,
             DocumentVersion? currentVersion,

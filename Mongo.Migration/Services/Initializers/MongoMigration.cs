@@ -29,7 +29,7 @@ namespace Mongo.Migration.Services.Initializers
             
             RegisterComponents();
             
-            _components.SetInstance<IMongoClient, MongoClient>(client);
+            _components.SetMongoClient(client);
 
             Initialize();
         }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Mongo.Migration.Services.Initializers;
 using Mongo.Migration.Test.TestDoubles;
@@ -65,15 +67,15 @@ namespace Mongo.Migration.Test.Performance
         {
             if (withVersion)
             {
-                var versionedCollectin = _client.GetDatabase(DATABASE_NAME)
+                var versionedCollection = _client.GetDatabase(DATABASE_NAME)
                     .GetCollection<TestDocumentWithAutoMigrate>(COLLECTION_NAME);
-                var versionedResult = versionedCollectin.FindAsync(_ => true).Result.ToListAsync().Result;
+                versionedCollection.FindAsync(_ => true).Result.ToListAsync().Wait();
                 return;
             }
 
             var collection = _client.GetDatabase(DATABASE_NAME)
                 .GetCollection<TestClass>(COLLECTION_NAME);
-            var result = collection.FindAsync(_ => true).Result.ToListAsync().Result;
+            collection.FindAsync(_ => true).Result.ToListAsync().Wait();
         }
 
         private void AddDocumentsToCache(int documentCount)
@@ -133,10 +135,18 @@ namespace Mongo.Migration.Test.Performance
             Console.WriteLine(
                 $"Second run with automation: Mongo.Migration: {swSecondWithMigration.ElapsedMilliseconds}ms, Documents: {documentCount}, Migrations per Document: 2");
             
-            ClearCollection();
+
 
             // Assert
+            var versionedCollection = _client.GetDatabase(DATABASE_NAME)
+                .GetCollection<BsonDocument>(COLLECTION_NAME);
+            var result = versionedCollection.FindAsync(_ => true).Result.ToListAsync().Result;
+
+            
             firstResult.Should().BeLessThan(toleranceMs);
+            result.ForEach( r => r["Version"].Should().Be("0.0.2"));
+            
+            ClearCollection();
         }
     }
 }

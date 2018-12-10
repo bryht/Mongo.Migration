@@ -1,3 +1,5 @@
+using MongoDB.Driver;
+
 namespace Mongo.Migration.Services.DiContainer
 {
     internal interface ICompoentRegistry
@@ -6,7 +8,6 @@ namespace Mongo.Migration.Services.DiContainer
 
         TComponent Get<TComponent>() where TComponent : class;
 
-        void SetInstance<TInterface, TInstance>(TInstance implementation)
-            where TInterface : class where TInstance : class;
+        void SetMongoClient(MongoClient implementation);
     }
 }

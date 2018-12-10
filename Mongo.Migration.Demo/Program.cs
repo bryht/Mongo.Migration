@@ -62,7 +62,7 @@ namespace Mongo.Migration.Demo
             Console.WriteLine("New Car was created with version: " + test.Version);
             Console.WriteLine("\n");
             
-            var automatedResult = typedCollection.FindAsync(_ => true).Result.ToListAsync().Result;
+            var automatedResult = bsonCollection.FindAsync(_ => true).Result.ToListAsync().Result;
 
             Console.WriteLine("Replaced automated:");
             automatedResult.ForEach(r => Console.WriteLine(r.ToBsonDocument() + "\n"));
