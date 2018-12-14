@@ -6,9 +6,9 @@ namespace Mongo.Migration.Documents.Attributes
     [AttributeUsage(AttributeTargets.Class)]
     public class AutomateMigrationFor : Attribute
     {
-        public AutomateMigrationFor(string databaseName, string collectionName)
+        public AutomateMigrationFor(string databaseName, string collectionName, bool delayUpdate = false)
         {
-            Information = new AutomateInformation(databaseName, collectionName);
+            Information = new AutomateInformation(databaseName, collectionName, delayUpdate);
         }
 
         public AutomateInformation Information { get; }

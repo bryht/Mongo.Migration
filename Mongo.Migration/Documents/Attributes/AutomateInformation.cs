@@ -2,7 +2,7 @@ namespace Mongo.Migration.Documents.Attributes
 {
     public struct AutomateInformation
     {
-        public AutomateInformation(string databaseName, string collectionName, bool delayedUpdate = false)
+        public AutomateInformation(string databaseName, string collectionName, bool delayedUpdate)
         {
             DatabaseName = databaseName;
             CollectionName = collectionName;

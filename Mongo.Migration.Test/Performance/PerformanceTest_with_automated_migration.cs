@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -134,17 +135,25 @@ namespace Mongo.Migration.Test.Performance
             
             Console.WriteLine(
                 $"Second run with automation: Mongo.Migration: {swSecondWithMigration.ElapsedMilliseconds}ms, Documents: {documentCount}, Migrations per Document: 2");
-            
-
 
             // Assert
-            var versionedCollection = _client.GetDatabase(DATABASE_NAME)
-                .GetCollection<BsonDocument>(COLLECTION_NAME);
-            var result = versionedCollection.FindAsync(_ => true).Result.ToListAsync().Result;
-
             
             firstResult.Should().BeLessThan(toleranceMs);
-            result.ForEach( r => r["Version"].Should().Be("0.0.2"));
+
+            for (int i = 0; i < 60; i++)
+            {
+                var versionedCollection = _client.GetDatabase(DATABASE_NAME)
+                    .GetCollection<BsonDocument>(COLLECTION_NAME);
+                var result = versionedCollection.FindAsync(new BsonDocument {{"Version","0.0.2"}}).Result.ToListAsync().Result;
+
+                if (result.Count() != documentCount)
+                {
+                    Thread.Sleep(1000);
+                    continue;
+                }
+                
+                result.ForEach( r => r["Version"].Should().Be("0.0.2"));
+            }
             
             ClearCollection();
         }
